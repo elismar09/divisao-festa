@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Divisor de Gastos de Festa</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#020617">
+<style>
+:root{--bg:#020617;--card:#020617;--text:#e5e7eb;--muted:#94a3b8;--primary:#38bdf8;--danger:#ef4444}
+body.light{--bg:#f1f5f9;--card:#fff;--text:#020617;--muted:#475569;--primary:#2563eb;--danger:#dc2626}
+body{margin:0;font-family:system-ui;background:var(--bg);color:var(--text);display:flex;justify-content:center;padding:14px}
+.card{width:100%;max-width:520px;background:var(--card);border-radius:18px;padding:16px}
+h1,h2{text-align:center}
+label{font-size:13px;color:var(--muted)}
+input{width:100%;padding:12px;border-radius:14px;border:none;margin-top:6px;background:#020617;color:var(--text)}
+body.light input{background:#f1f5f9}
+button{width:100%;padding:12px;border-radius:16px;border:none;background:var(--primary);color:#fff;font-weight:600;margin-top:10px}
+.pessoa{border:1px solid #334155;border-radius:16px;padding:10px;margin-top:10px}
+.linha{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:end}
+.hidden{display:none}
+.resultado{white-space:pre-line;margin-top:12px}
+.footer{margin-top:16px;border-top:1px solid #334155;padding-top:12px}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>🍾 Divisor de Gastos</h1>
+<button id="btnNova">➕ NOVA FESTA</button>
+<div id="infoFesta" style="margin-top:10px;font-size:14px;color:var(--muted)"></div>
+
+<div id="conteudo">
+<h2>Pessoas</h2>
+<div id="pessoas"></div>
+<button id="btnAdd">➕ Adicionar Pessoa</button>
+<button id="btnCalc">Calcular</button>
+<div id="resultado" class="resultado"></div>
+<div id="resumo" class="resultado"></div>
+<button id="btnPDF">📄 Exportar PDF</button>
+<div class="footer">
+<button id="btnHist">📚 Histórico</button>
+<button id="btnQR">🔳 QR Code</button>
+<button id="btnTema">🌗 Tema</button>
+</div>
+</div>
+
+<div id="historico" class="hidden"></div>
+<div id="qr" class="hidden" style="text-align:center">
+<canvas id="qrcode"></canvas>
+<button onclick="voltar()">⬅ Voltar</button>
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script>
+const KEY='festas_app';
+let contador=0;
+let nomeFesta='';
+let valorTotal=0;
+
+if('serviceWorker'in navigator){navigator.serviceWorker.register('service-worker.js');}
+
+document.getElementById('btnNova').onclick=novaFesta;
+document.getElementById('btnAdd').onclick=adicionarPessoa;
+document.getElementById('btnCalc').onclick=calcular;
+document.getElementById('btnPDF').onclick=exportarPDF;
+document.getElementById('btnHist').onclick=abrirHistorico;
+document.getElementById('btnQR').onclick=gerarQRCode;
+document.getElementById('btnTema').onclick=toggleTema;
+
+function toggleTema(){document.body.classList.toggle('light');localStorage.setItem('tema',document.body.className)}
+document.body.className=localStorage.getItem('tema')||'';
+
+function novaFesta(){
+  const nome=prompt('Digite o NOME DA FESTA:');
+  if(!nome)return;
+  const total=prompt('Digite o VALOR TOTAL da festa:');
+  if(!total||isNaN(parseFloat(total)))return alert('Valor inválido');
+  nomeFesta=nome.toUpperCase();
+  valorTotal=parseFloat(total);
+  contador=0;
+  document.getElementById('pessoas').innerHTML='';
+  document.getElementById('resultado').textContent='';
+  document.getElementById('resumo').textContent='';
+  document.getElementById('infoFesta').innerHTML=`<b>${nomeFesta}</b><br>💰 R$ ${valorTotal.toFixed(2)}`;
+}
+
+function adicionarPessoa(){
+  contador++;
+  const div=document.createElement('div');
+  div.className='pessoa';
+  div.innerHTML=`<div class="linha"><div><label>Pessoa ${contador}</label><input class="nome" oninput="this.value=this.value.toUpperCase()"></div><div><label>Meia</label><input type="checkbox" class="meia"></div><div><label>Dias</label><input type="number" class="dias" min="1" value="1"></div><button onclick="this.closest('.pessoa').remove()">❌</button></div>`;
+  document.getElementById('pessoas').appendChild(div);
+}
+
+function calcular(){
+  if(!nomeFesta||!valorTotal)return alert('Crie a festa primeiro');
+  const lista=[...document.querySelectorAll('.pessoa')].map(p=>({nome:p.querySelector('.nome').value||'SEM NOME',dias:+p.querySelector('.dias').value,peso:p.querySelector('.meia').checked?0.5:1,valor:0}));
+  if(!lista.length)return alert('Adicione pessoas');
+  const unidades=lista.reduce((s,p)=>s+p.dias*p.peso,0);
+  const unit=valorTotal/unidades;
+  lista.forEach(p=>p.valor=p.dias*p.peso*unit);
+  let soma=lista.reduce((s,p)=>s+p.valor,0);
+  lista[0].valor+=valorTotal-soma;
+  lista.sort((a,b)=>b.dias-a.dias||a.nome.localeCompare(b.nome));
+  let t=`Festa: ${nomeFesta}\n\n`;
+  lista.forEach(p=>t+=`- ${p.nome}: R$ ${p.valor.toFixed(2)} (${p.dias} dia${p.peso==0.5?', meia':''})\n`);
+  document.getElementById('resultado').textContent=t;
+  document.getElementById('resumo').textContent=`Total conferido: R$ ${valorTotal.toFixed(2)}`;
+  salvarHistorico(lista);
+}
+
+function salvarHistorico(pessoas){
+  const h=JSON.parse(localStorage.getItem(KEY))||[];
+  h.unshift({nome:nomeFesta,data:new Date().toLocaleDateString(),total:valorTotal,pessoas});
+  localStorage.setItem(KEY,JSON.stringify(h.slice(0,20)));
+}
+
+function abrirHistorico(){
+  const h=JSON.parse(localStorage.getItem(KEY))||[];
+  let html='<h2>Histórico</h2>';
+  h.forEach(f=>html+=`<div class=pessoa><b>${f.nome}</b><br>${f.data} - R$ ${f.total.toFixed(2)}</div>`);
+  document.getElementById('conteudo').classList.add('hidden');
+  document.getElementById('historico').classList.remove('hidden');
+  document.getElementById('historico').innerHTML=html+'<button onclick="voltar()">⬅ Voltar</button>';
+}
+
+function gerarQRCode(){
+  document.getElementById('conteudo').classList.add('hidden');
+  document.getElementById('qr').classList.remove('hidden');
+  QRCode.toCanvas(document.getElementById('qrcode'),location.href);
+}
+
+function voltar(){
+  document.getElementById('historico').classList.add('hidden');
+  document.getElementById('qr').classList.add('hidden');
+  document.getElementById('conteudo').classList.remove('hidden');
+}
+
+function exportarPDF(){
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF();
+  pdf.text(nomeFesta,10,10);
+  pdf.text(document.getElementById('resultado').textContent,10,20);
+  pdf.save('divisao-festa.pdf');
+}
+</script>
+</body>
+</html>
