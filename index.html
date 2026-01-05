@@ -19,9 +19,18 @@
       --danger: #ef4444;
     }
 
+    body.light {
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #020617;
+      --muted: #475569;
+      --primary: #2563eb;
+      --danger: #dc2626;
+    }
+
     body {
       margin: 0;
-      font-family: system-ui;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI";
       background: var(--bg);
       color: var(--text);
       display: flex;
@@ -35,10 +44,20 @@
       background: var(--card);
       border-radius: 22px;
       padding: 16px;
+      animation: fadeUp .3s ease;
     }
 
-    h1, h2, h3 {
+    h1 {
       text-align: center;
+      font-size: 22px;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      text-align: center;
+      font-size: 16px;
+      color: var(--primary);
+      margin-top: 18px;
     }
 
     label {
@@ -56,6 +75,10 @@
       color: var(--text);
     }
 
+    body.light input {
+      background: #f1f5f9;
+    }
+
     button {
       width: 100%;
       padding: 14px;
@@ -65,6 +88,12 @@
       color: #fff;
       font-weight: 600;
       margin-top: 10px;
+      transition: transform .15s ease, opacity .15s ease;
+    }
+
+    button:active {
+      transform: scale(.97);
+      opacity: .85;
     }
 
     .danger {
@@ -75,293 +104,441 @@
       display: none;
     }
 
-    .pessoa {
+    #infoFesta {
+      background: linear-gradient(135deg, #0f172a, #020617);
       border: 1px solid #334155;
-      border-radius: 16px;
-      padding: 10px;
-      margin-top: 10px;
+      border-radius: 18px;
+      padding: 14px;
+      margin-top: 14px;
+      text-align: center;
+    }
+
+    #infoFesta .nome {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    #infoFesta .valor {
+      margin-top: 6px;
+      font-size: 16px;
+      color: #38bdf8;
+    }
+
+    .pessoa {
+      background: #020617;
+      border-radius: 18px;
+      padding: 12px;
+      margin-top: 12px;
+      border: 1px solid #334155;
     }
 
     .linha {
       display: grid;
-      grid-template-columns: 2fr 60px 70px 44px;
-      gap: 10px;
+      grid-template-columns: 1fr 70px 80px 56px;
+      gap: 12px;
       align-items: end;
     }
 
+    .pessoa .danger {
+      margin-top: 22px;
+    }
+
     .resultado {
+      background: #020617;
+      border-radius: 18px;
+      padding: 14px;
+      border: 1px solid #334155;
+      margin-top: 14px;
       white-space: pre-line;
       font-size: 14px;
-      margin-top: 10px;
     }
 
-    .infoFesta {
-      margin-top: 10px;
-      border: 1px solid #334155;
-      border-radius: 14px;
-      padding: 10px;
-      text-align: center;
+    .footer {
+      margin-top: 16px;
+      border-top: 1px solid #334155;
+      padding-top: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
 
-    canvas {
-      display: block;
-      margin: 20px auto;
+    #loading {
+      position: fixed;
+      inset: 0;
+      background: #020617;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      color: #38bdf8;
+    }
+
+    #loading span {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
   </style>
 </head>
 
 <body>
 
-  <div class="card" id="app">
-    <h1>🍾 Divisão de Gastos</h1>
+<div id="loading">
+  <h2>🍾 Divisão de Gastos</h2>
+  <span>Preparando sua festa…</span>
+</div>
 
-    <button onclick="novaFesta()">➕ NOVA FESTA</button>
+<div class="card hidden" id="app">
+  <h1>🍾 Divisão de Gastos</h1>
 
-    <div id="infoFesta" class="infoFesta hidden">
-      <b id="festaNome"></b><br>
-      <span id="festaValor"></span>
-    </div>
+  <button onclick="novaFesta()">➕ NOVA FESTA</button>
 
-    <h3>Pessoas</h3>
+  <div id="infoFesta" class="hidden">
+    <div class="nome" id="nomeFestaExibido"></div>
+    <div class="valor" id="valorFestaExibido"></div>
+  </div>
 
-    <div id="pessoas"></div>
+  <h3>Pessoas que participaram</h3>
 
-    <button onclick="adicionarPessoa()">➕ Adicionar pessoa</button>
-    <button onclick="calcular()">Calcular divisão</button>
+  <div id="pessoas"></div>
 
-    <div id="resultado" class="resultado"></div>
-    <div id="resumo" class="resultado"></div>
+  <button onclick="adicionarPessoa()">➕ Adicionar pessoa</button>
+  <button onclick="calcular()">🧮 Calcular divisão</button>
 
-    <button onclick="exportarPDF()">📊 PDF da Festa</button>
+  <div id="resultado" class="resultado hidden"></div>
+  <div id="resumo" class="resultado hidden"></div>
+
+  <button onclick="exportarPDF()">📄 Exportar PDF</button>
+
+  <div class="footer">
     <button onclick="abrirQR()">🔳 QR Code / Compartilhar</button>
     <button onclick="abrirHistorico()">📚 Histórico</button>
+    <button onclick="toggleTema()">🌗 Tema</button>
   </div>
+</div>
 
-  <!-- TELA QR -->
-  <div class="card hidden" id="telaQR">
-    <button onclick="voltar()">⬅ Voltar</button>
-    <h2>QR Code da Festa</h2>
-    <canvas id="qrcode"></canvas>
-    <button onclick="compartilharWhatsapp()">📤 WhatsApp</button>
-  </div>
+<div class="card hidden" id="telaQR">
+  <button onclick="voltar()">⬅ Voltar</button>
+  <h2>🔳 Compartilhar festa</h2>
+  <canvas id="qrcode"></canvas>
+  <button onclick="compartilharWhatsapp()">📤 Enviar no WhatsApp</button>
+</div>
 
-  <!-- HISTÓRICO -->
-  <div class="card hidden" id="telaHistorico">
-    <button onclick="voltar()">⬅ Voltar</button>
-    <h2>📚 Histórico de Festas</h2>
-    <div id="listaHistorico"></div>
-    <button onclick="exportarHistoricoPDF()">📊 PDF Histórico</button>
-  </div>
+<div class="card hidden" id="telaHistorico">
+  <button onclick="voltar()">⬅ Voltar</button>
+  <h2>📚 Histórico de festas</h2>
+  <div id="listaHistorico"></div>
+  <button onclick="exportarHistoricoPDF()">📊 PDF geral</button>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
+<script>
+  const SITE = 'https://elismarnunes.github.io/divisao-festa/';
+  const KEY = 'historico_festas';
+
+  let contador = 0;
+  let ultimaDivisao = [];
+  let festaAtual = null;
+
+  window.onload = () => {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').classList.remove('hidden');
+  };
+
+  function novaFesta() {
+    const nome = prompt('Qual o nome da festa?');
+    if (!nome) return;
+
+    let valor = prompt('Qual o valor total gasto? (ex: 1800,88)');
+    if (!valor) return;
+
+    valor = valor.replace(',', '.');
+    if (isNaN(valor)) {
+      alert('Valor inválido');
+      return;
     }
 
-    const SITE = 'https://elismarnunes.github.io/divisao-festa/';
-    const KEY = 'historico_festas';
+    festaAtual = {
+      nome: nome.toUpperCase(),
+      valor: parseFloat(valor)
+    };
 
-    let festaAtual = null;
-    let contador = 0;
-    let ultimaDivisao = [];
+    document.getElementById('nomeFestaExibido').innerText = festaAtual.nome;
+    document.getElementById('valorFestaExibido').innerText =
+      '💰 R$ ' + festaAtual.valor.toFixed(2);
 
-    function normalizarValor(v) {
-      if (!v) return NaN;
-      return parseFloat(v.replace(/\./g, '').replace(',', '.'));
+    document.getElementById('infoFesta').classList.remove('hidden');
+
+    document.getElementById('pessoas').innerHTML = '';
+    document.getElementById('resultado').textContent = '';
+    document.getElementById('resumo').textContent = '';
+
+    contador = 0;
+  }
+
+  function adicionarPessoa() {
+    if (!festaAtual) {
+      alert('Crie a festa antes de adicionar pessoas');
+      return;
     }
 
-    function novaFesta() {
-      const nome = prompt('NOME DA FESTA');
-      if (!nome) return;
-
-      const v = prompt('VALOR TOTAL DA FESTA');
-      const valor = normalizarValor(v);
-      if (isNaN(valor)) return alert('Valor inválido');
-
-      festaAtual = {
-        id: Date.now(),
-        nome: nome.toUpperCase(),
-        valor
-      };
-
-      contador = 0;
-      pessoas.innerHTML = '';
-      resultado.textContent = '';
-      resumo.textContent = '';
-
-      festaNome.innerText = festaAtual.nome;
-      festaValor.innerText = 'Valor total: R$ ' + valor.toFixed(2);
-      infoFesta.classList.remove('hidden');
-    }
-
-    function adicionarPessoa() {
-      contador++;
-
-      const d = document.createElement('div');
-      d.className = 'pessoa';
-
-      d.innerHTML = `
-        <div class="linha">
-          <div>
-            <label>Pessoa ${contador}</label>
-            <input class="nome" oninput="this.value=this.value.toUpperCase()">
-          </div>
-          <div style="text-align:center">
-            <label>Meia</label><br>
-            <input type="checkbox" class="meia">
-          </div>
-          <div>
-            <label>Dias</label>
-            <input type="number" class="dias" min="1" value="1">
-          </div>
-          <button class="danger" onclick="if(confirm('Remover pessoa?')) this.closest('.pessoa').remove()">❌</button>
+    const d = document.createElement('div');
+    d.className = 'pessoa';
+    d.innerHTML = `
+      <div class="linha">
+        <div>
+          <label>Nome da pessoa</label>
+          <input class="nome" oninput="this.value=this.value.toUpperCase()">
         </div>
-      `;
+        <div style="text-align:center">
+          <label>Meia?</label><br>
+          <input type="checkbox" class="meia">
+        </div>
+        <div>
+          <label>Dias</label>
+          <input type="number" class="dias" min="1" value="1">
+        </div>
+        <button class="danger" onclick="this.closest('.pessoa').remove()">❌</button>
+      </div>
+    `;
+    document.getElementById('pessoas').appendChild(d);
+  }
 
-      pessoas.appendChild(d);
-    }
+  function calcular() {
+    if (!festaAtual) return alert('Crie a festa primeiro');
 
-    function calcular() {
-      if (!festaAtual) return alert('Crie a festa');
+    const cards = [...document.querySelectorAll('.pessoa')];
+    if (!cards.length) return alert('Adicione pessoas');
 
-      const dados = [...document.querySelectorAll('.pessoa')].map(p => ({
-        nome: p.querySelector('.nome').value || 'SEM NOME',
-        meia: p.querySelector('.meia').checked,
-        dias: +p.querySelector('.dias').value,
-        valor: 0
-      }));
+    const dados = cards.map(c => {
+      return {
+        nome: c.querySelector('.nome').value || 'SEM NOME',
+        meia: c.querySelector('.meia').checked,
+        dias: parseInt(c.querySelector('.dias').value) || 1
+      };
+    });
 
-      if (!dados.length) return alert('Adicione pessoas');
+    const unidades = dados.reduce(
+      (s, p) => s + p.dias * (p.meia ? 0.5 : 1),
+      0
+    );
 
-      const u = dados.reduce((s, p) => s + p.dias * (p.meia ? 0.5 : 1), 0);
-      const v = festaAtual.valor / u;
+    const valorUnidade = festaAtual.valor / unidades;
 
-      dados.forEach(p => p.valor = p.dias * (p.meia ? 0.5 : 1) * v);
-      dados[0].valor += festaAtual.valor - dados.reduce((s, p) => s + p.valor, 0);
+    dados.forEach(p => {
+      p.valor = p.dias * (p.meia ? 0.5 : 1) * valorUnidade;
+    });
 
-      ultimaDivisao = dados;
+    const ajuste =
+      festaAtual.valor - dados.reduce((s, p) => s + p.valor, 0);
+    dados[0].valor += ajuste;
 
-      resultado.textContent = '';
-      dados.forEach(p => {
-        resultado.textContent += `- ${p.nome}: R$ ${p.valor.toFixed(2)}
-`;
-      });
+    dados.sort((a, b) => b.dias - a.dias || a.nome.localeCompare(b.nome));
 
-      resumo.textContent = 'Total conferido ✔️';
-      salvarHistorico(dados);
-    }
+    const res = document.getElementById('resultado');
+    res.textContent = '';
 
-    function salvarHistorico(pessoas) {
-      const h = JSON.parse(localStorage.getItem(KEY)) || [];
-      h.push({
-        id: festaAtual.id,
-        festa: festaAtual.nome,
-        data: new Date().toLocaleDateString(),
-        total: festaAtual.valor,
-        pessoas
-      });
-      localStorage.setItem(KEY, JSON.stringify(h));
-    }
+    dados.forEach(p => {
+      res.textContent +=
+        `${p.nome} — R$ ${p.valor.toFixed(2)} (${p.dias} dia${p.dias > 1 ? 's' : ''}${p.meia ? ' • meia' : ''})\n`;
+    });
 
-    function abrirQR() {
-      if (!ultimaDivisao.length) return alert('Calcule antes');
-      app.classList.add('hidden');
-      telaQR.classList.remove('hidden');
-      QRCode.toCanvas(qrcode, gerarLink());
-    }
+    document.getElementById('resumo').textContent =
+      `✔ Total conferido: R$ ${festaAtual.valor.toFixed(2)}`;
 
-    function gerarLink() {
-      return SITE + '?dados=' + btoa(JSON.stringify({
+    res.classList.remove('hidden');
+    document.getElementById('resumo').classList.remove('hidden');
+
+    ultimaDivisao = dados;
+    salvarHistorico(dados);
+  }
+
+  function salvarHistorico(pessoas) {
+    const historico = JSON.parse(localStorage.getItem(KEY)) || [];
+    historico.push({
+      id: Date.now(),
+      data: new Date().toLocaleDateString(),
+      festa: festaAtual.nome,
+      total: festaAtual.valor,
+      pessoas
+    });
+    localStorage.setItem(KEY, JSON.stringify(historico));
+  }
+
+  function abrirHistorico() {
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('telaHistorico').classList.remove('hidden');
+
+    const lista = document.getElementById('listaHistorico');
+    lista.innerHTML = '';
+
+    const historico = JSON.parse(localStorage.getItem(KEY)) || [];
+    historico.forEach(item => {
+      lista.innerHTML += `
+	  <div class="pessoa" style="cursor:pointer" onclick="reabrirFesta(${item.id})">
+		<button class="danger" style="float:right;width:auto;padding:6px 10px"
+		  onclick="event.stopPropagation(); excluirHistorico(${item.id})">❌</button>
+		<b>${item.festa}</b><br>
+		${item.data} • R$ ${item.total.toFixed(2)}
+	  </div>
+	`;
+
+    });
+  }
+
+  function excluirHistorico(id) {
+    if (!confirm('Excluir esta festa do histórico?')) return;
+    const historico = JSON.parse(localStorage.getItem(KEY)) || [];
+    localStorage.setItem(KEY, JSON.stringify(historico.filter(h => h.id !== id)));
+    abrirHistorico();
+  }
+
+  function abrirQR() {
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('telaQR').classList.remove('hidden');
+    QRCode.toCanvas(
+      document.getElementById('qrcode'),
+      gerarLink()
+    );
+  }
+
+  function gerarLink() {
+    return SITE + '?dados=' + btoa(
+      JSON.stringify({
         festa: festaAtual.nome,
         total: festaAtual.valor,
         pessoas: ultimaDivisao
-      }));
-    }
+      })
+    );
+  }
 
-    function compartilharWhatsapp() {
-      window.open(
-        'https://wa.me/?text=' + encodeURIComponent(gerarLink()),
-        '_blank'
-      );
-    }
+  function compartilharWhatsapp() {
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent('Divisão da festa ' + gerarLink())}`,
+      '_blank'
+    );
+  }
 
-    function abrirHistorico() {
-      app.classList.add('hidden');
-      telaHistorico.classList.remove('hidden');
+  function exportarPDF() {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
 
-      const h = JSON.parse(localStorage.getItem(KEY)) || [];
-      listaHistorico.innerHTML = '';
+    pdf.setFontSize(16);
+    pdf.text('Divisão de Gastos', 105, 20, { align: 'center' });
 
-      h.forEach((f, i) => {
-        listaHistorico.innerHTML += `
-          <div class="pessoa">
-            <b>${f.festa}</b><br>
-            ${f.data} • R$ ${f.total.toFixed(2)}<br>
-            <button class="danger" onclick="excluir(${i})">Excluir</button>
-          </div>
-        `;
-      });
-    }
+    let y = 36;
+    pdf.text(festaAtual.nome, 105, y, { align: 'center' });
+    y += 8;
+    pdf.text('Valor total: R$ ' + festaAtual.valor.toFixed(2), 105, y, { align: 'center' });
+    y += 12;
 
-    function excluir(i) {
-      if (!confirm('Excluir festa?')) return;
+    ultimaDivisao.forEach(p => {
+      pdf.text(`${p.nome} — R$ ${p.valor.toFixed(2)}`, 20, y);
+      y += 8;
+    });
 
-      const h = JSON.parse(localStorage.getItem(KEY)) || [];
-      h.splice(i, 1);
-      localStorage.setItem(KEY, JSON.stringify(h));
+    pdf.save('divisao_festa.pdf');
+  }
 
-      abrirHistorico();
-    }
+  function exportarHistoricoPDF() {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
 
-    function exportarPDF() {
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF();
+    pdf.text('Relatório Geral de Festas', 105, 20, { align: 'center' });
 
-      pdf.setFillColor(2, 6, 23);
-      pdf.rect(0, 0, 210, 25, 'F');
+    let y = 32;
+    const historico = JSON.parse(localStorage.getItem(KEY)) || [];
+    historico.forEach(h => {
+      pdf.text(`${h.festa} - ${h.data} - R$ ${h.total.toFixed(2)}`, 20, y);
+      y += 8;
+    });
 
-      pdf.setTextColor(255);
-      pdf.setFontSize(18);
-      pdf.text('Divisão de Gastos', 105, 17, { align: 'center' });
+    pdf.save('historico_festas.pdf');
+  }
 
-      pdf.setTextColor(0);
-      let y = 40;
+  function voltar() {
+    location.reload();
+  }
 
-      pdf.text(festaAtual.nome, 105, y, { align: 'center' });
-      y += 10;
+  function toggleTema() {
+    document.body.classList.toggle('light');
+  }
+  
+  function reabrirFesta(id) {
+  const historico = JSON.parse(localStorage.getItem(KEY)) || [];
+  const festa = historico.find(h => h.id === id);
 
-      ultimaDivisao.forEach(p => {
-        pdf.text(`${p.nome}: R$ ${p.valor.toFixed(2)}`, 20, y);
-        y += 7;
-      });
+  if (!festa) {
+    alert('Festa não encontrada');
+    return;
+  }
 
-      pdf.save('festa.pdf');
-    }
+  // Volta para tela principal
+  document.getElementById('telaHistorico').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
 
-    function exportarHistoricoPDF() {
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF();
+  // Restaura dados da festa
+  festaAtual = {
+    nome: festa.festa,
+    valor: festa.total
+  };
 
-      let y = 20;
-      pdf.text('Histórico de Festas', 105, y, { align: 'center' });
-      y += 10;
+  document.getElementById('nomeFestaExibido').innerText = festaAtual.nome;
+  document.getElementById('valorFestaExibido').innerText =
+    '💰 R$ ' + festaAtual.valor.toFixed(2);
 
-      const h = JSON.parse(localStorage.getItem(KEY)) || [];
-      h.forEach(f => {
-        pdf.text(`${f.festa} - ${f.data} - R$ ${f.total.toFixed(2)}`, 20, y);
-        y += 7;
-      });
+  document.getElementById('infoFesta').classList.remove('hidden');
 
-      pdf.save('historico.pdf');
-    }
+  // Limpa pessoas e resultados
+  const pessoasEl = document.getElementById('pessoas');
+  pessoasEl.innerHTML = '';
+  document.getElementById('resultado').classList.add('hidden');
+  document.getElementById('resumo').classList.add('hidden');
 
-    function voltar() {
-      location.reload();
-    }
-  </script>
+  // Recria pessoas
+  festa.pessoas.forEach(p => {
+    const d = document.createElement('div');
+    d.className = 'pessoa';
+
+    d.innerHTML = `
+      <div class="linha">
+        <div>
+          <label>Nome da pessoa</label>
+          <input class="nome" value="${p.nome}" oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div style="text-align:center">
+          <label>Meia?</label><br>
+          <input type="checkbox" class="meia" ${p.meia ? 'checked' : ''}>
+        </div>
+        <div>
+          <label>Dias</label>
+          <input type="number" class="dias" min="1" value="${p.dias}">
+        </div>
+        <button class="danger" onclick="this.closest('.pessoa').remove()">❌</button>
+      </div>
+    `;
+
+    pessoasEl.appendChild(d);
+  });
+
+  ultimaDivisao = festa.pessoas;
+}
+
+</script>
 
 </body>
 </html>
